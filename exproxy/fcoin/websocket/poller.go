@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/morya/looptrader/exproxy/sign"
+	"github.com/morya/looptrader/lib/dumper"
+
 	"github.com/gorilla/websocket"
-	"github.com/morya/ex/alarm"
-	"github.com/morya/ex/dumper"
-	"github.com/morya/ex/sign"
 	"github.com/morya/utils/log"
 )
 
@@ -393,7 +393,7 @@ func (p *Poller) Run() {
 			if err != nil {
 				connectFail++
 				if connectFail > 20 {
-					alarm.FangtangNotify("websocket告警", "无法连接服务器")
+					log.Errorf("websocket告警 无法连接服务器")
 					return
 				}
 				time.Sleep(time.Second * 5)

@@ -11,26 +11,6 @@ const (
 	OID_Trade_Canceling int = 3
 )
 
-/*
-{
-	"binary": 0,
-    "channel": "ok_sub_spot_bch_btc_ticker",
-    "data": {
-		"buy": "10.5806",
-	    "change": "1.0886",
-	    "close": "0",
-	    "dayHigh": "11.7",
-	    "dayLow": "9",
-	    "high": "11.7",
-	    "last": "10.5786",
-	    "low": "8.98",
-	    "open": "0",   //
-	    "sell": "10.6399",
-	    "timestamp": 1.515679814123e+12,
-	    "vol": "2534035.627"
-    }
-}
-*/
 type TagBodyTicker struct {
 	Buy       float64 `json:"buy,string"`
 	Change    float64 `json:"change,string"`
@@ -122,25 +102,6 @@ type TagMsgDeals struct {
 	Data [][]string
 }
 
-/*
-{
-  "binary": 0,
-  "data": {
-    "orderId": 32177900,
-    "status": 2,
-    "tradeType": "sell",
-    "tradeUnitPrice": "3.248000",
-    "symbol": "eos_okb",
-    "tradePrice": "2.273622736",
-    "createdDate": "1527659391000",
-    "unTrade": "0.0",
-    "averagePrice": "3.24800000",
-    "tradeAmount": "0.700007",
-    "completedTradeAmount": "0.700007"
-  },
-  "channel": "ok_sub_spot_eos_okb_order"
-}
-*/
 type TagMsgOrderUpdate struct {
 	TagMsgCommReply
 	Data struct {
