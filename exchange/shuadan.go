@@ -1,13 +1,14 @@
 package exchange
 
 import (
-	"fcoinExchange/conf"
-	"fcoinExchange/log"
-	"fcoinExchange/model"
 	"fmt"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/morya/fcoinExchange/conf"
+	"github.com/morya/fcoinExchange/log"
+	"github.com/morya/fcoinExchange/model"
 )
 
 func (p *Exchange) AutoShuaDan() {
@@ -31,7 +32,7 @@ func (p *Exchange) AutoShuaDan() {
 		// 获取账户
 		balance, err = p.GetAccountBalance()
 		if err != nil {
-			log.Logger.Errorf("get balance failed. %s\n", err)
+			log.Logger.Errorf("get balance failed. %s", err)
 			continue
 		}
 

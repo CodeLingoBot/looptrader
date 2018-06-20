@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fcoinExchange/model"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+	"github.com/morya/fcoinExchange/model"
 )
 
 //

@@ -1,15 +1,16 @@
 package exchange
 
 import (
-	"fcoinExchange/conf"
-	"fcoinExchange/fcoin"
-	"fcoinExchange/log"
-	"fcoinExchange/model"
 	"fmt"
 	"math"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/morya/fcoinExchange/conf"
+	"github.com/morya/fcoinExchange/fcoin"
+	"github.com/morya/fcoinExchange/log"
+	"github.com/morya/fcoinExchange/model"
 )
 
 //
@@ -33,8 +34,8 @@ type Exchange struct {
 
 //
 func NewExchange(cfg *model.Configuration) (*Exchange, error) {
-	client := fcoin.NewClient(cfg.AppKey, cfg.AppSecret, cfg.RequestTimeout)
-	list, err := client.GetCurrencies()
+	fcclient := fcoin.NewClient(cfg.AppKey, cfg.AppSecret, cfg.RequestTimeout)
+	list, err := fcclient.GetCurrencies()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func NewExchange(cfg *model.Configuration) (*Exchange, error) {
 		Symbol:        cfg.Symbol,
 		BaseCurrency:  base,
 		QuoteCurrency: quote,
-		fcclient:      client,
+		fcclient:      fcclient,
 		config:        cfg,
 		Balance:       make(map[string]*model.BalanceContext),
 		accountChan:   make(chan int, 1),
@@ -119,6 +120,10 @@ func (p *Exchange) AutoUpdateTicker() {
 	}
 }
 
+/*
+定时检查订单是否很久未成交、部分成交
+过期自动取消
+*/
 func (p *Exchange) AutoCheckOrders() {
 	log.Logger.Infof("start auto check order task")
 	var (
@@ -129,6 +134,7 @@ func (p *Exchange) AutoCheckOrders() {
 			"symbol": p.Symbol,
 			"limit":  "10",
 		}
+		// 定时取消未成交、部分成交的订单
 		states     []string = []string{"submitted", "partial_filled"}
 		serverTime *model.ServerTime
 		timeDValue int64
@@ -146,37 +152,38 @@ func (p *Exchange) AutoCheckOrders() {
 			querys["states"] = state
 			orders, err = p.fcclient.ListOrders(querys)
 			if err != nil {
-				log.Logger.Errorf("get orders failed. %s\n", err)
-			} else {
-				if orders.Status != 0 {
-					log.Logger.Errorf("get orderlist but return status is %d", orders.Status)
-				} else {
-					serverTime, err = p.fcclient.GetServerTime()
-					if err != nil {
-						log.Logger.Errorf("get server time failed. %v", serverTime)
-						serverTime = new(model.ServerTime)
-						serverTime.Data = time.Now().UnixNano() / 1000000
-					}
-					for _, order := range orders.Data {
-						log.Logger.Infof("order id %s, created at: %d", order.Id, order.CreatedAt)
-						timeDValue = order.CreatedAt - serverTime.Data
-						log.Logger.Infof("time d_value: %d", timeDValue)
-						if math.Abs(float64(timeDValue)) > float64(p.config.RevokeOrderTime) {
-							// invoke order
-							log.Logger.Infof("cancel order id %s", order.Id)
-							var corder *model.CancelOrder
-							corder, err = p.fcclient.CancelOrder(order.Id)
-							if err != nil {
-								log.Logger.Infof("cancel order failed. %s", err)
-							}
-							if corder.Status != 0 {
-								log.Logger.Infof("cancel order failed. %v", corder)
+				log.Logger.Errorf("get orders failed. %s", err)
+				continue
+			}
 
-							}
-						}
-						time.Sleep(time.Second)
+			if orders.Status != 0 {
+				log.Logger.Errorf("get orderlist but return status is %d", orders.Status)
+				continue
+			}
+
+			serverTime, err = p.fcclient.GetServerTime()
+			if err != nil {
+				log.Logger.Errorf("get server time failed. %v", serverTime)
+				serverTime = new(model.ServerTime)
+				serverTime.Data = time.Now().UnixNano() / 1000000
+			}
+			for _, order := range orders.Data {
+				log.Logger.Infof("order id %s, created at: %d", order.Id, order.CreatedAt)
+				timeDValue = order.CreatedAt - serverTime.Data
+				log.Logger.Infof("time d_value: %d", timeDValue)
+				if math.Abs(float64(timeDValue)) > float64(p.config.RevokeOrderTime) {
+					// invoke order
+					log.Logger.Infof("cancel order id %s", order.Id)
+					var corder *model.CancelOrder
+					corder, err = p.fcclient.CancelOrder(order.Id)
+					if err != nil {
+						log.Logger.Infof("cancel order failed. %s", err)
+					}
+					if corder.Status != 0 {
+						log.Logger.Infof("cancel order failed. %v", corder)
 					}
 				}
+				time.Sleep(time.Second)
 			}
 		}
 		<-tk.C

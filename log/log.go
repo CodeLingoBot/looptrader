@@ -1,47 +1,33 @@
 package log
 
 import (
-	"fcoinExchange/conf"
-	"fmt"
-	"strings"
+	// "fmt"
+	// "strings"
+	"os"
 
-	"go.uber.org/zap"
+	"github.com/morya/fcoinExchange/conf"
+	"github.com/morya/utils/log"
 )
 
 var (
-	Logger *zap.SugaredLogger
+	Logger *log.Logger
 )
 
 func Init() {
-	var (
-		cfg    zap.Config
-		logger *zap.Logger
-	)
-	cfg = zap.NewProductionConfig()
-	cfg.OutputPaths = []string{conf.GetConfiguration().LogFile, "stdout"}
-	switch strings.ToUpper(conf.GetConfiguration().LogLevel) {
-	case "DEBUG":
-		cfg.Level.SetLevel(zap.DebugLevel)
-		break
-	case "INFO":
-		cfg.Level.SetLevel(zap.InfoLevel)
-		break
-	case "WARNNING":
+	var c = conf.GetConfiguration()
+	var o = os.Stdout
+	// var err error
 
-		cfg.Level.SetLevel(zap.WarnLevel)
-		break
-	case "ERROR":
-		cfg.Level.SetLevel(zap.ErrorLevel)
-		break
-	default:
-		cfg.Level.SetLevel(zap.ErrorLevel)
-		break
-	}
+	//	if len(c.LogFile) != 0 {
+	//		o, err = log.NewRollingFile(c.LogFile, log.DailyRolling)
+	//		if err != nil {
+	//			log.Info("create rolling file failed, using stdout")
+	//			o = os.Stdout
+	//		}
+	//	}
 
-	var err error
-	logger, err = cfg.Build()
-	if err != nil {
-		fmt.Printf("build log failed. %s\n", err)
-	}
-	Logger = logger.Sugar()
+	Logger = log.New(o, "")
+
+	Logger.SetFlags(log.LstdFlags | log.Lshortfile)
+	Logger.SetLevelString(c.LogLevel)
 }

@@ -1,13 +1,14 @@
 package exchange
 
 import (
-	"fcoinExchange/conf"
-	"fcoinExchange/log"
-	"fcoinExchange/model"
 	"fmt"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/morya/fcoinExchange/conf"
+	"github.com/morya/fcoinExchange/log"
+	"github.com/morya/fcoinExchange/model"
 )
 
 //

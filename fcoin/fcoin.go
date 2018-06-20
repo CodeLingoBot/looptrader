@@ -7,12 +7,13 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
-	"fcoinExchange/model"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/morya/fcoinExchange/model"
 )
 
 var (
