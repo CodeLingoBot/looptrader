@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
-	"github.com/morya/fcoinExchange/model"
+	"github.com/morya/looptrader/exproxy/model"
 )
 
 //
 
 //
 var (
-	defaultPath string = "fcoin.yaml"
+	defaultPath string = "looptrader.yaml"
 	cfg         *config
 )
 

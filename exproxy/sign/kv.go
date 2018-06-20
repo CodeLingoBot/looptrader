@@ -1,4 +1,4 @@
-package fcoin
+package sign
 
 import (
 	"fmt"

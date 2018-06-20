@@ -5,7 +5,7 @@ import (
 	// "strings"
 	"os"
 
-	"github.com/morya/fcoinExchange/conf"
+	"github.com/morya/looptrader/conf"
 	"github.com/morya/utils/log"
 )
 

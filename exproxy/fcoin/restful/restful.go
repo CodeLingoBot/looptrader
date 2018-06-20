@@ -1,19 +1,16 @@
-package fcoin
+package restful
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha1"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/morya/fcoinExchange/model"
+	"github.com/morya/looptrader/exproxy/model"
+	"github.com/morya/looptrader/exproxy/sign"
 )
 
 var (
@@ -52,30 +49,6 @@ func NewClient(key, secret string, to int) *Client {
 		appSecret: []byte(secret),
 		timeout:   to,
 	}
-}
-
-// signature msg
-func (p *Client) Signature(msg string) string {
-	bmsg := base64.StdEncoding.EncodeToString([]byte(msg))
-	sh := hmac.New(sha1.New, p.appSecret)
-	sh.Write([]byte(bmsg))
-	return base64.StdEncoding.EncodeToString(sh.Sum(nil))
-}
-
-//
-func (p *Client) MakeSignatureMessage(method, requrl string, timestamp int64, querys map[string]string) string {
-	var (
-		sigStr   string
-		upMethod string = strings.ToUpper(method)
-	)
-
-	switch upMethod {
-	case "GET":
-		sigStr = fmt.Sprintf("%s%s%d", upMethod, requrl, timestamp)
-	case "POST":
-		sigStr = fmt.Sprintf("%s%s%d%s", upMethod, requrl, timestamp, SortMap(querys, "&"))
-	}
-	return sigStr
 }
 
 // get fcoin server time
@@ -202,7 +175,7 @@ func (p *Client) GetBalance() (*model.AccountBalance, error) {
 
 	timestamp := time.Now().UnixNano() / 1000000
 	req.Header.Add("FC-ACCESS-KEY", p.appKey)
-	req.Header.Add("FC-ACCESS-SIGNATURE", p.Signature(p.MakeSignatureMessage(reqMethod, balanceUrl, timestamp, nil)))
+	req.Header.Add("FC-ACCESS-SIGNATURE", sign.Signature(sign.MakeSignatureMessage(reqMethod, balanceUrl, timestamp, nil), p.appSecret))
 	req.Header.Add("FC-ACCESS-TIMESTAMP", fmt.Sprintf("%d", timestamp))
 
 	resp, err := p.client.Do(req)
@@ -251,7 +224,7 @@ func (p *Client) CreateOrder(symbol, side, otype, price, amount string) (*model.
 	timestamp := time.Now().UnixNano() / 1000000
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("FC-ACCESS-KEY", p.appKey)
-	req.Header.Add("FC-ACCESS-SIGNATURE", p.Signature(p.MakeSignatureMessage(reqMethod, orderUrl, timestamp, params)))
+	req.Header.Add("FC-ACCESS-SIGNATURE", sign.Signature(sign.MakeSignatureMessage(reqMethod, orderUrl, timestamp, params), p.appSecret))
 	req.Header.Add("FC-ACCESS-TIMESTAMP", fmt.Sprintf("%d", timestamp))
 
 	resp, err := p.client.Do(req)
@@ -289,7 +262,7 @@ func (p *Client) CancelOrder(id string) (*model.CancelOrder, error) {
 	timestamp := time.Now().UnixNano() / 1000000
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("FC-ACCESS-KEY", p.appKey)
-	req.Header.Add("FC-ACCESS-SIGNATURE", p.Signature(p.MakeSignatureMessage(reqMethod, reqUrl, timestamp, nil)))
+	req.Header.Add("FC-ACCESS-SIGNATURE", sign.Signature(sign.MakeSignatureMessage(reqMethod, reqUrl, timestamp, nil), p.appSecret))
 	req.Header.Add("FC-ACCESS-TIMESTAMP", fmt.Sprintf("%d", timestamp))
 
 	resp, err := p.client.Do(req)
@@ -319,7 +292,7 @@ func (p *Client) ListOrders(querys map[string]string) (*model.OrderList, error) 
 		reqUrl    string
 	)
 
-	reqUrl = fmt.Sprintf("%s?%s", orderUrl, SortMap(querys, "&"))
+	reqUrl = fmt.Sprintf("%s?%s", orderUrl, sign.SortMap(querys, "&"))
 	req, err := http.NewRequest(reqMethod, reqUrl, nil)
 	if err != nil {
 		return nil, err
@@ -327,7 +300,7 @@ func (p *Client) ListOrders(querys map[string]string) (*model.OrderList, error) 
 
 	timestamp := time.Now().UnixNano() / 1000000
 	req.Header.Add("FC-ACCESS-KEY", p.appKey)
-	req.Header.Add("FC-ACCESS-SIGNATURE", p.Signature(p.MakeSignatureMessage(reqMethod, reqUrl, timestamp, nil)))
+	req.Header.Add("FC-ACCESS-SIGNATURE", sign.Signature(sign.MakeSignatureMessage(reqMethod, reqUrl, timestamp, nil), p.appSecret))
 	req.Header.Add("FC-ACCESS-TIMESTAMP", fmt.Sprintf("%d", timestamp))
 
 	resp, err := p.client.Do(req)
